@@ -6,7 +6,7 @@
 /*   By: tcros <tcros@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/09 10:28:50 by tcros             #+#    #+#             */
-/*   Updated: 2026/03/09 16:21:19 by tcros            ###   ########.fr       */
+/*   Updated: 2026/03/10 12:22:09 by tcros            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,10 +15,10 @@
 static void	parse_date(std::string& date, int line, bool input)
 {
 	if (date.length() != 10)
-		throw BadInput(date, line);
+		throw BadInput(date, line, !input);
 
 	if (date[4] != '-' || date[7] != '-')
-		throw BadInput(date, line);
+		throw BadInput(date, line, !input);
 
 	std::stringstream	ssdate(date);
 
@@ -28,14 +28,14 @@ static void	parse_date(std::string& date, int line, bool input)
 	int	day;
 
 	if (!(ssdate >> year >> dash >> month >> dash >> day))
-		throw BadInput(date, line);
+		throw BadInput(date, line, !input);
 
 	bool	isBis = (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0);
 	bool	isYear = (year < 2009) && !input;
 	bool	isMonth = (month < 1) || (month > 12);
 	
 	if (isYear || isMonth)
-		throw BadInput(date, line);
+		throw BadInput(date, line, !input);
 
 	int daysInMonth[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 	if (isBis)
@@ -44,10 +44,10 @@ static void	parse_date(std::string& date, int line, bool input)
 	bool	isDay = (day < 1 || day > daysInMonth[month - 1]);
 
 	if (isDay)
-		throw BadInput(date, line);
+		throw BadInput(date, line, !input);
 }
 
-static float	parse_value(std::string& value, int line, float val_max)
+static float	parse_value(std::string& value, int line, float val_max, bool isData)
 {
 	if (value.empty())
 		throw NotPositiveNumber();
@@ -57,7 +57,7 @@ static float	parse_value(std::string& value, int line, float val_max)
 	float	val;
 
 	if (!(ssval >> val))
-		throw BadInput(value, line);
+		throw BadInput(value, line, isData);
 
 	if (val < 0)
 		throw NotPositiveNumber();
@@ -97,14 +97,14 @@ static void	parse_file(std::ifstream& infile, std::map<std::string, float>* data
 			size_t	pos = currLine.find(sep);
 
 			if (pos == std::string::npos)
-				throw BadInput(currLine, i);
+				throw BadInput(currLine, i, !input);
 			
 			std::string	s_date = currLine.substr(0, pos);
 			std::string	s_val = currLine.substr(pos + sep.length());
 			
 			float	max_value = (input) ? 1000 : INT_MAX;
 			parse_date(s_date, i, input);
-			float	val = parse_value(s_val, i, max_value);
+			float	val = parse_value(s_val, i, max_value, !input);
 
 			if (!input)
 				(*data_map)[s_date] = val;
@@ -139,7 +139,7 @@ static void	parsing(std::map<std::string, float>& data_map)
 
 	std::getline(infile, firstLine);
 	if (firstLine != firstline_name)
-		throw BadInput(firstLine, 1);
+		throw BadInput(firstLine, 1, true);
 
 	parse_file(infile, &data_map, ",", false);
 	infile.close();
@@ -157,7 +157,7 @@ static void	check_input_file(char *av, std::map<std::string, float>& data_map)
 
 	std::getline(input_file, firstLine);
 	if (firstLine != "date | value")
-		throw BadInput(firstLine, 1);
+		throw BadInput(firstLine, 1, false);
 
 	parse_file(input_file, &data_map, " | ", true);
 	input_file.close();

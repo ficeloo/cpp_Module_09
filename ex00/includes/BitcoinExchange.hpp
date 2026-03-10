@@ -6,7 +6,7 @@
 /*   By: tcros <tcros@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/09 10:16:28 by tcros             #+#    #+#             */
-/*   Updated: 2026/03/09 16:18:31 by tcros            ###   ########.fr       */
+/*   Updated: 2026/03/10 12:23:02 by tcros            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,11 +52,14 @@ class BadInput : public std::exception
 		return (_msg.c_str());
 	}
 
-	BadInput( std::string input, int lineNbr )
+	BadInput( std::string input, int lineNbr, bool data )
 	{
 		std::ostringstream	oss;
 
+		if (data)
+			oss << "[in data.csv] ";
 		oss << "bad input => " << input << " at line " << lineNbr;
+
 		_msg = oss.str();
 	}
 	virtual ~BadInput() throw() {}
