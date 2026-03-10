@@ -6,7 +6,7 @@
 /*   By: tcros <tcros@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/09 10:28:50 by tcros             #+#    #+#             */
-/*   Updated: 2026/03/10 12:22:09 by tcros            ###   ########.fr       */
+/*   Updated: 2026/03/10 12:32:08 by tcros            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -114,7 +114,7 @@ static void	parse_file(std::ifstream& infile, std::map<std::string, float>* data
 		}
 		catch (std::exception& e)
 		{
-			std::cout << "Error: " << e.what() << std::endl;
+			std::cerr << "Error: " << e.what() << std::endl;
 		}
 	}
 }
