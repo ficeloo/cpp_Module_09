@@ -6,7 +6,7 @@
 /*   By: tcros <tcros@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/17 14:31:19 by tcros             #+#    #+#             */
-/*   Updated: 2026/03/17 18:07:44 by tcros            ###   ########.fr       */
+/*   Updated: 2026/03/18 17:51:50 by tcros            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,6 +19,7 @@
 # include <cstdlib>
 # include <sstream>
 # include <climits>
+# include <cmath>
 # include <algorithm>
 
 # include "coloring.hpp"
