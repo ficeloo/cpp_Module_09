@@ -6,7 +6,7 @@
 /*   By: tcros <tcros@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/17 14:31:19 by tcros             #+#    #+#             */
-/*   Updated: 2026/03/18 17:51:50 by tcros            ###   ########.fr       */
+/*   Updated: 2026/03/20 18:01:43 by tcros            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,6 +29,14 @@ class TooLargeNumber : public std::exception
 	virtual const char*	what() const throw()
 	{
 		return ("larger than an integer.");
+	}
+};
+
+class NoDuplicateAllowed: public std::exception
+{
+	virtual const char*	what() const throw()
+	{
+		return ("a duplicate was found.");
 	}
 };
 

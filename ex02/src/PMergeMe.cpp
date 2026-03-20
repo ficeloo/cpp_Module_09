@@ -6,7 +6,7 @@
 /*   By: tcros <tcros@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/17 14:22:38 by tcros             #+#    #+#             */
-/*   Updated: 2026/03/18 18:45:53 by tcros            ###   ########.fr       */
+/*   Updated: 2026/03/20 19:21:35 by tcros            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,33 +37,13 @@ size_t	jacobsthal(size_t k)
 	return (round((pow(2, k + 1) + pow(-1, k)) / 3));
 }
 
-std::vector<size_t>	get_jacobsthal_vec(size_t size)
+int	diff_jacobsthal(size_t cpt)
 {
-	size_t	nb = 3;
-	size_t	nbb;
-	std::vector<size_t>	res;
-
-	if (size < 2)
-		return (res);
-	
-	for(size_t i = 2; nb < size; ++i)
-	{
-		nb = jacobsthal(i);
-		nbb = jacobsthal(i - 1) + 1;
-
-		size_t	j = nb;
-		if (j > size)
-			j = size;
-		while (j >= nbb)
-			res.push_back(j--);
-	}
-	return (res);
+	return (jacobsthal(cpt + 1) - jacobsthal(cpt));
 }
 
-static void	parse(char *av)
+static void	parse(std::string str)
 {
-	std::string	str(av);
-
 	if (str.empty())
 		throw BadInput();
 
@@ -116,10 +96,12 @@ static void	merging_vector(std::vector<int>& vecList, size_t order)
 	merging_vector(vecList, order * 2);
 }
 
-static void	generate_pend_main_vector(std::vector<int>& vecList, std::vector<int>& main, std::vector<int>& pend, size_t order)
+static void	generate_pend_main_vector(std::vector<int>& vecList, std::vector<int>& main, std::vector<int>& pend, std::vector<int>& leftover, std::vector<size_t>& m_id, std::vector<size_t>& p_id, size_t order)
 {
 	// add first pending element to main.
 	main.insert(main.begin(), vecList.begin(), vecList.begin() + order);
+	m_id.push_back(1);
+	m_id.push_back(2);
 
 	//add all bigger to main numbers (winners) and all pending numbers (losers)
 	std::vector<int>::iterator	it;
@@ -130,59 +112,100 @@ static void	generate_pend_main_vector(std::vector<int>& vecList, std::vector<int
 			break ;
 		
 		if (win % 2 == 1)
+		{
 			main.insert(main.end(), it, it + order);
-		else
-			pend.insert(pend.end(), it, it + order);
-		win++;
-	}
-	//il faudra peut etre gerer le cas impaire dans une autre section afin de le mettre directement apres le sort_and_insert_vector
-}
-
-static void	sort_and_insert_vector(std::vector<int>& pend, std::vector<int>& main, size_t order)
-{
-	// peut etre un prob avec pend.size() / order
-	std::vector<size_t>	j_id = get_jacobsthal_vec(pend.size() / order);
-
-	for (size_t i = 0; i < j_id.size(); ++i)
-	{
-		size_t	id_win = (j_id[i] - 1) * 2 * order + (2 * order) - 1;
-		std::vector<int>::iterator	limit;
-
-		if (id_win >= main.size())
-			limit = main.end();
+			m_id.push_back(win + 2);
+		}
 		else
 		{
-			int	limValue = main[id_win];
-			limit = std::lower_bound(main.begin(), main.end(), limValue);
+			pend.insert(pend.end(), it, it + order);
+			p_id.push_back(win);
 		}
-
-		int	insertValue = pend[(j_id[i] - 1) * order + (order - 1)];
-		std::vector<int>::iterator	insertId = std::lower_bound(main.begin(), limit, insertValue);
-
-		size_t	start_id = (j_id[i] - 1) * order;
-		main.insert(insertId, pend.begin() + start_id, pend.begin() + start_id + order);
+		win++;
 	}
+	if (it < vecList.end())
+		leftover.insert(leftover.end(), it, vecList.end());
 }
 
-static void	add_leftover_vector(std::vector<int>& vecList, std::vector<int>& pend, size_t order);
+static size_t	dicothomie_vector(std::vector<int>& pend, std::vector<int>& main, std::vector<size_t>& m_id, std::vector<size_t>& p_id, size_t cpt, int gap, size_t order)
+{
+	int	begin = 0;
+	int	end = cpt;
+
+	size_t	i = 0;
+	while (p_id[cpt] + 1 > m_id[i])
+	{
+		end++;
+		i++;
+	}
+	printSequence("+++dev+++ ", pend);
+	while (begin <= end)
+	{
+		std::cout << "======" << std::endl;
+		size_t	mid = (begin + end) / 2;
+	std::cout << "dev>> :begin" << begin<< std::endl;
+	std::cout << "dev>> :mid" << mid<< std::endl;
+	std::cout << "dev>> :end" << end<< std::endl;
+		if (main[mid * order + order - 1] < pend[gap * order + order - 1])
+			begin = mid + 1;
+		else
+			end = mid - 1;
+	}
+		std::cout << "===END===" << std::endl;
+	std::cout << "dev>> :begin" << begin<< std::endl;
+	std::cout << "dev>> :end" << end<< std::endl;
+	return (begin * order);
+}
+
+static void	sort_and_insert_vector(std::vector<int>& pend, std::vector<int>& main, std::vector<size_t>& m_id, std::vector<size_t>& p_id, size_t order)
+{
+	size_t	cpt = 1;
+	while(!pend.empty())
+	{
+		int	gap = diff_jacobsthal(cpt) - 1;
+		while (gap >= 0)
+		{
+			if (gap * order >= pend.size())
+			{
+				gap--;
+				continue ;
+			}
+			printSequence("3- main: ", main);
+			size_t	insert = dicothomie_vector(pend, main, m_id, p_id, cpt, gap, order);
+			main.insert(main.begin() + insert, pend.begin() + (order * gap), pend.begin() + order + (order * gap));
+			pend.erase(pend.begin() + order * gap, pend.begin() + order + (order * gap));
+			gap--;
+		}
+		cpt++;
+	}
+}
 
 static void	inserting_vector(std::vector<int>& vecList, size_t order)
 {
-	std::vector<int>	main;
-	std::vector<int>	pend;
-
-	generate_pend_main_vector(vecList, main, pend, order);
-
+	printSequence("vecList: ", vecList);
 	while (order >= 1)
 	{
-		sort_and_insert_vector(pend, main, order);
+		std::vector<int>	main;
+		std::vector<int>	pend;
+		std::vector<int>	leftover;
+		std::vector<size_t>	m_id;
+		std::vector<size_t>	p_id;
 
+		generate_pend_main_vector(vecList, main, pend, leftover, m_id, p_id, order);
+		std::cout << "dev >> order: " << order << std::endl;
+		printSequence("1- main: ", main);
+		printSequence("1- pend: ", pend);
+
+		sort_and_insert_vector(pend, main, m_id, p_id, order);
+
+		printSequence("2- main: ", main);
+		printSequence("2- pend: ", pend);
+		printSequence("leftover: ", leftover);
+
+		main.insert(main.end(), leftover.begin(), leftover.end());
+		vecList = main;
 		order /= 2;
-
-		add_leftover_vector(vecList, pend, order);
 	}
-
-	vecList = main;
 }
 
 static void	sorting_vector(std::vector<int>& vecList)
@@ -205,7 +228,17 @@ void	PMergeMe(int ac, char *av[])
 
 		while (i < ac)
 		{
-			parse(av[i]);
+			std::string	str(av[i]);
+
+			parse(str);
+
+			int	j = i + 1;
+			while (j < ac)
+			{
+				std::string	st2(av[j++]);
+				if (str == st2)
+					throw NoDuplicateAllowed();
+			}
 
 			int	n = std::atoi(av[i]);
 			deckList.push_back(n);
