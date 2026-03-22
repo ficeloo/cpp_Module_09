@@ -6,7 +6,7 @@
 /*   By: tcros <tcros@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/17 14:22:38 by tcros             #+#    #+#             */
-/*   Updated: 2026/03/20 19:21:35 by tcros            ###   ########.fr       */
+/*   Updated: 2026/03/22 19:22:22 by tcros            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -99,61 +99,57 @@ static void	merging_vector(std::vector<int>& vecList, size_t order)
 static void	generate_pend_main_vector(std::vector<int>& vecList, std::vector<int>& main, std::vector<int>& pend, std::vector<int>& leftover, std::vector<size_t>& m_id, std::vector<size_t>& p_id, size_t order)
 {
 	// add first pending element to main.
-	main.insert(main.begin(), vecList.begin(), vecList.begin() + order);
+	main.insert(main.begin(), vecList.begin(), vecList.begin() + order * 2);
+	m_id.push_back(0);
 	m_id.push_back(1);
-	m_id.push_back(2);
 
 	//add all bigger to main numbers (winners) and all pending numbers (losers)
 	std::vector<int>::iterator	it;
-	size_t	win = 1;
-	for (it = vecList.begin() + order; it != vecList.end(); std::advance(it, order))
+	size_t	win = 2;
+	for (it = vecList.begin() + order * 2; it + order * 2 <= vecList.end(); std::advance(it, order * 2))
 	{
-		if (static_cast<size_t>(std::distance(it, vecList.end())) < order)
-			break ;
-		
-		if (win % 2 == 1)
-		{
-			main.insert(main.end(), it, it + order);
-			m_id.push_back(win + 2);
-		}
-		else
-		{
-			pend.insert(pend.end(), it, it + order);
-			p_id.push_back(win);
-		}
+		main.insert(main.end(), it + order, it + order * 2);
+		pend.insert(pend.end(), it, it + order);
+		p_id.push_back(win);
+		m_id.push_back(win);
 		win++;
 	}
 	if (it < vecList.end())
 		leftover.insert(leftover.end(), it, vecList.end());
+	if (leftover.size() == order)
+	{
+		pend.insert(pend.end(), it, vecList.end());
+		p_id.push_back(win - 1);
+		leftover.clear();
+	}
 }
 
-static size_t	dicothomie_vector(std::vector<int>& pend, std::vector<int>& main, std::vector<size_t>& m_id, std::vector<size_t>& p_id, size_t cpt, int gap, size_t order)
+static size_t	dichotomie_vector(std::vector<int>& pend, std::vector<int>& main, std::vector<size_t>& m_id, std::vector<size_t>& p_id, int gap, size_t order)
 {
 	int	begin = 0;
-	int	end = cpt;
+	int	end = 0;
 
 	size_t	i = 0;
-	while (p_id[cpt] + 1 > m_id[i])
+	while (i < m_id.size() && p_id[gap] != m_id[i])
 	{
 		end++;
 		i++;
 	}
-	printSequence("+++dev+++ ", pend);
 	while (begin <= end)
 	{
-		std::cout << "======" << std::endl;
 		size_t	mid = (begin + end) / 2;
-	std::cout << "dev>> :begin" << begin<< std::endl;
-	std::cout << "dev>> :mid" << mid<< std::endl;
-	std::cout << "dev>> :end" << end<< std::endl;
-		if (main[mid * order + order - 1] < pend[gap * order + order - 1])
+		if (main[mid * order + order - 1] < pend[gap * order + (order - 1)])
 			begin = mid + 1;
 		else
 			end = mid - 1;
 	}
-		std::cout << "===END===" << std::endl;
-	std::cout << "dev>> :begin" << begin<< std::endl;
-	std::cout << "dev>> :end" << end<< std::endl;
+	for (size_t j = 0; j < m_id.size(); ++j)
+    {
+        if (m_id[j] >= (size_t)begin)
+            m_id[j] += 1;
+    }
+	m_id.insert(m_id.begin() + begin, (size_t)begin);
+	p_id.erase(p_id.begin() + gap);
 	return (begin * order);
 }
 
@@ -170,10 +166,9 @@ static void	sort_and_insert_vector(std::vector<int>& pend, std::vector<int>& mai
 				gap--;
 				continue ;
 			}
-			printSequence("3- main: ", main);
-			size_t	insert = dicothomie_vector(pend, main, m_id, p_id, cpt, gap, order);
-			main.insert(main.begin() + insert, pend.begin() + (order * gap), pend.begin() + order + (order * gap));
-			pend.erase(pend.begin() + order * gap, pend.begin() + order + (order * gap));
+			size_t	insert = dichotomie_vector(pend, main, m_id, p_id, gap, order);
+			main.insert(main.begin() + insert, pend.begin() + (order * gap), pend.begin() + (order) + (order * gap));
+			pend.erase(pend.begin() + (order * gap), pend.begin() + order + (order * gap));
 			gap--;
 		}
 		cpt++;
@@ -182,7 +177,6 @@ static void	sort_and_insert_vector(std::vector<int>& pend, std::vector<int>& mai
 
 static void	inserting_vector(std::vector<int>& vecList, size_t order)
 {
-	printSequence("vecList: ", vecList);
 	while (order >= 1)
 	{
 		std::vector<int>	main;
@@ -192,15 +186,8 @@ static void	inserting_vector(std::vector<int>& vecList, size_t order)
 		std::vector<size_t>	p_id;
 
 		generate_pend_main_vector(vecList, main, pend, leftover, m_id, p_id, order);
-		std::cout << "dev >> order: " << order << std::endl;
-		printSequence("1- main: ", main);
-		printSequence("1- pend: ", pend);
 
 		sort_and_insert_vector(pend, main, m_id, p_id, order);
-
-		printSequence("2- main: ", main);
-		printSequence("2- pend: ", pend);
-		printSequence("leftover: ", leftover);
 
 		main.insert(main.end(), leftover.begin(), leftover.end());
 		vecList = main;
@@ -261,6 +248,19 @@ void	PMergeMe(int ac, char *av[])
 		printSequence("After:  ", vecList);
 		printDuration(ac, "vector", start_vec, end_vec);
 		printDuration(ac, "deque", start_deq, end_deq);
+		//check if sorted
+
+		std::vector<int>::iterator iV;
+		for (iV = vecList.begin(); iV < vecList.end() - 1; iV++)
+		{
+			if (*iV > *(iV + 1))
+			{
+				std::cout << CYAN << "Result vector : " << RESET << "Not sorted 😔" << std::endl;
+				break ;
+			}
+		}
+		if (iV == vecList.end() - 1)
+			std::cout << CYAN << "Result vector : " << RESET << "Sorted 👍" << std::endl;
 		
 	}
 	catch (const std::exception& e)
